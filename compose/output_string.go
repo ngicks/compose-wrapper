@@ -47,33 +47,27 @@ const (
 	Recreated  StateType = "Recreated"
 )
 
-func init() {
-	sort.Slice(states, func(i, j int) bool {
-		return len(states[i]) > len(states[j])
-	})
-}
-
 var states = []StateType{
-	Error,
-	Creating,
-	Starting,
-	Started,
-	Waiting,
-	Healthy,
-	Exited,
 	Restarting,
 	Restarted,
+	Recreated,
+	Creating,
+	Starting,
+	Recreate,
+	Removing,
+	Stopping,
+	Healthy,
 	Running,
 	Created,
-	Stopping,
 	Stopped,
 	Killing,
-	Killed,
-	Removing,
 	Removed,
 	Skipped,
-	Recreate,
-	Recreated,
+	Waiting,
+	Started,
+	Exited,
+	Killed,
+	Error,
 }
 
 type ComposeOutput struct {
