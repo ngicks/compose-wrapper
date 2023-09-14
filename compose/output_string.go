@@ -3,6 +3,7 @@ package compose
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -77,6 +78,7 @@ type ComposeOutput struct {
 
 type ComposeOutputLine struct {
 	Name         string
+	Num          int
 	ResourceType ResourceType
 	StateType    StateType
 	Desc         string
@@ -100,7 +102,7 @@ func DecodeComposeOutputLine(line string, projectName string, project *types.Pro
 	if decoded.ResourceType == "" {
 		return ComposeOutputLine{}, fmt.Errorf("unknown resource type. input = %s", orgLine)
 	}
-	decoded.Name, line = readResourceName(line, projectName, project, decoded.ResourceType)
+	decoded.Name, decoded.Num, line = readResourceName(line, projectName, project, decoded.ResourceType)
 	if decoded.Name == "" {
 		return ComposeOutputLine{}, fmt.Errorf("unknown resource type. input = %s", orgLine)
 	}
@@ -129,7 +131,7 @@ func readResourceType(s string) (resource ResourceType, rest string) {
 	return "", s
 }
 
-func readResourceName(s string, projectName string, project *types.Project, resourceTy ResourceType) (serviceName string, rest string) {
+func readResourceName(s string, projectName string, project *types.Project, resourceTy ResourceType) (service string, num int, rest string) {
 	s = strings.TrimLeftFunc(s, unicode.IsSpace)
 	if s[0] == '"' {
 		s = s[1:]
@@ -159,8 +161,9 @@ func readResourceName(s string, projectName string, project *types.Project, reso
 					}
 				}
 				numStr := rest[0:i]
+				num, _ := strconv.ParseInt(numStr, 10, 64)
 				rest = rest[i:]
-				return serviceCfg.Name + "-" + numStr, rest
+				return serviceCfg.Name, int(num), rest
 			}
 		}
 	case Network:
@@ -172,7 +175,7 @@ func readResourceName(s string, projectName string, project *types.Project, reso
 				if s[0] == '"' {
 					s = s[1:]
 				}
-				return networkCfg[i], s
+				return networkCfg[i], 0, s
 			}
 
 		}
@@ -183,11 +186,11 @@ func readResourceName(s string, projectName string, project *types.Project, reso
 				if s[0] == '"' {
 					s = s[1:]
 				}
-				return volumeName, s
+				return volumeName, 0, s
 			}
 		}
 	}
-	return "", s
+	return "", 0, s
 }
 
 func readState(s string) (state StateType, rest string) {
