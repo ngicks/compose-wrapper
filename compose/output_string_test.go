@@ -124,10 +124,6 @@ func TestOutputString(t *testing.T) {
 			shouldErr: true,
 		},
 	} {
-		for i := 0; i < len(tc.expected); i++ {
-			tc.expected[i].ProjectName = projectName
-		}
-
 		for idx, line := range strings.Split(tc.lines, "\n") {
 			if line == "" {
 				break

@@ -77,7 +77,6 @@ type ComposeOutput struct {
 
 type ComposeOutputLine struct {
 	Name         string
-	ProjectName  string
 	ResourceType ResourceType
 	StateType    StateType
 	Desc         string
@@ -96,8 +95,6 @@ func DecodeComposeOutputLine(line string, projectName string, project *types.Pro
 	if found {
 		decoded.DryRunMode = true
 	}
-
-	decoded.ProjectName = projectName
 
 	decoded.ResourceType, line = readResourceType(line)
 	if decoded.ResourceType == "" {
