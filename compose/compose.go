@@ -3,6 +3,7 @@ package compose
 import (
 	"bytes"
 	"context"
+	"io"
 	"strings"
 	"sync"
 
@@ -12,29 +13,8 @@ import (
 	"github.com/docker/compose/v2/pkg/compose"
 )
 
-type ComposeService struct {
-	mu          sync.Mutex
-	out, err    *bytes.Buffer
-	projectName string
-	project     *types.Project
-	service     api.Service
-}
-
-// NewComposeService returns *Compose service wrapper.
-//
-// clientOpt is used to initialize docker client.
-// If clientOpt is nil, it uses a default option which is set Context to "default" and others left empty.
-//
-// stdout and stderr are used to redirect compose output. If both or either is nil, outputs for that side would be simply discarded.
-// Be cautious, however, compose calls os.Exit(1) in case of some errors. Redirecting values to log or somewhere is strongly advised.
-func NewComposeService(
-	dockerCli *command.DockerCli,
-	outBuf, errBuf *bytes.Buffer,
-	projectName string,
-	project *types.Project,
-) *ComposeService {
-	serviceProxy := api.NewServiceProxy().WithService(compose.NewComposeService(dockerCli))
-
+// AddDockerComposeLabel changes service.CustomLabels so that is can be found by docker compose v2.
+func AddDockerComposeLabel(project *types.Project) {
 	// Mimicking toProject of cli/cli.
 	// Without this, docker compose v2 lose track of project and therefore would not be able to recreate services.
 	for i, service := range project.Services {
@@ -48,11 +28,47 @@ func NewComposeService(
 		}
 		project.Services[i] = service
 	}
+}
+
+type ComposeService struct {
+	mu          sync.Mutex
+	out, err    *bytes.Buffer
+	projectName string
+	project     *types.Project
+	service     api.Service
+}
+
+// NewComposeService returns a new wrapped compose service proxy.
+// NewComposeService is not goroutine safe. It mutates given project.
+func NewComposeService(
+	projectName string,
+	project *types.Project,
+	dockerCli *command.DockerCli,
+) *ComposeService {
+	AddDockerComposeLabel(project)
+
+	var bufOut, bufErr = new(bytes.Buffer), new(bytes.Buffer)
+
+	if out := dockerCli.Out(); out != nil {
+		w := io.MultiWriter(bufOut, out)
+		_ = dockerCli.Apply(command.WithOutputStream(w))
+	} else {
+		_ = dockerCli.Apply(command.WithOutputStream(bufOut))
+	}
+
+	if err := dockerCli.Err(); err != nil {
+		w := io.MultiWriter(bufErr, err)
+		_ = dockerCli.Apply(command.WithErrorStream(w))
+	} else {
+		_ = dockerCli.Apply(command.WithErrorStream(bufErr))
+	}
+
+	serviceProxy := api.NewServiceProxy().WithService(compose.NewComposeService(dockerCli))
 
 	return &ComposeService{
+		out:         bufOut,
+		err:         bufErr,
 		service:     serviceProxy,
-		out:         outBuf,
-		err:         errBuf,
 		projectName: projectName,
 		project:     project,
 	}

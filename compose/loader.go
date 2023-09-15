@@ -1,9 +1,8 @@
 package compose
 
 import (
-	"bytes"
 	"context"
-	"io"
+	"os"
 
 	"github.com/compose-spec/compose-go/loader"
 	"github.com/compose-spec/compose-go/types"
@@ -11,67 +10,25 @@ import (
 	"github.com/docker/cli/cli/flags"
 )
 
+// InitializeDockerCli initializes DockerCli.
+//
+// If clientOpt is nil, cli will be initialized with &flags.ClientOptions{Context: "default"}.
+//
+// ops will be applied twice, therefore all ops must be idempotent and/or must be aware of it.
+// This is to encounter the case where passing malformed *flag.ClientOptions may cause it to exit by calling os.Exit(1).
+// To prevent it from silently dying, this function sets err output stream to os.Stderr if it is not set.
+// After initialization, it re-applies ops to ensure err output stream is what the caller wants to be.
 func InitializeDockerCli(
 	clientOpt *flags.ClientOptions,
-	stdout, stderr io.Writer,
 	ops ...command.DockerCliOption,
-) (cli *command.DockerCli, bufOut, bufErr *bytes.Buffer, err error) {
-	bufOut = new(bytes.Buffer)
-	bufErr = new(bytes.Buffer)
-
-	var consoleStd, consoleErr io.Writer = bufOut, bufErr
-	if stdout != nil {
-		consoleStd = io.MultiWriter(bufOut, stdout)
-	}
-	if stderr != nil {
-		consoleErr = io.MultiWriter(bufErr, stderr)
-	}
-
-	ops = append(ops, command.WithOutputStream(consoleStd), command.WithErrorStream(consoleErr))
+) (cli *command.DockerCli, err error) {
 	dockerCli, err := command.NewDockerCli(ops...)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	if clientOpt != nil {
-		err = dockerCli.Initialize(clientOpt)
-	} else {
-		err = dockerCli.Initialize(&flags.ClientOptions{
-			Context: "default",
-		})
-	}
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	return dockerCli, bufOut, bufErr, nil
-}
-
-type Loader struct {
-	DockerCli      *command.DockerCli
-	ProjectName    string
-	ConfigDetails  types.ConfigDetails
-	Options        []func(*loader.Options)
-	OutBuf, ErrBuf *bytes.Buffer
-}
-
-func NewLoader(
-	clientOpt *flags.ClientOptions,
-	redirectedOut, redirectedErr io.Writer,
-	projectName string,
-	configDetails types.ConfigDetails,
-	options []func(*loader.Options),
-	ops ...command.DockerCliOption,
-) (*Loader, error) {
-	var err error
-
-	dockerCli, outBuf, errBuf, err := InitializeDockerCli(
-		clientOpt,
-		redirectedOut, redirectedErr,
-		ops...,
-	)
-
 	if err != nil {
 		return nil, err
 	}
+
+	_ = dockerCli.Apply(command.WithErrorStream(os.Stderr))
+
 	if clientOpt != nil {
 		err = dockerCli.Initialize(clientOpt)
 	} else {
@@ -79,6 +36,41 @@ func NewLoader(
 			Context: "default",
 		})
 	}
+	if err != nil {
+		return nil, err
+	}
+
+	// This calls os.Exit(1) in case of initialization error.
+	// That's why we've set stdout / stderr to output streams.
+	_ = dockerCli.Client()
+
+	_ = dockerCli.Apply(command.WithErrorStream(nil))
+	if err := dockerCli.Apply(ops...); err != nil {
+		return nil, err
+	}
+
+	if dockerCli.Err() == nil {
+		_ = dockerCli.Apply(command.WithErrorStream(os.Stderr))
+	}
+
+	return dockerCli, nil
+}
+
+type Loader struct {
+	DockerCli     *command.DockerCli
+	ProjectName   string
+	ConfigDetails types.ConfigDetails
+	Options       []func(*loader.Options)
+}
+
+func NewLoader(
+	projectName string,
+	configDetails types.ConfigDetails,
+	options []func(*loader.Options),
+	clientOpt *flags.ClientOptions,
+	ops ...command.DockerCliOption,
+) (*Loader, error) {
+	dockerCli, err := InitializeDockerCli(clientOpt, ops...)
 	if err != nil {
 		return nil, err
 	}
@@ -88,8 +80,6 @@ func NewLoader(
 		ProjectName:   projectName,
 		ConfigDetails: configDetails,
 		Options:       options,
-		OutBuf:        outBuf,
-		ErrBuf:        errBuf,
 	}, nil
 }
 
@@ -106,16 +96,14 @@ func (l *Loader) Load(ctx context.Context) (*types.Project, error) {
 	)
 }
 
-func (l *Loader) LoadComposeService(ctx context.Context, stdout io.Writer, stderr io.Writer) (*ComposeService, error) {
+func (l *Loader) LoadComposeService(ctx context.Context) (*ComposeService, error) {
 	project, err := l.Load(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return NewComposeService(
-		l.DockerCli,
-		l.OutBuf,
-		l.ErrBuf,
 		l.ProjectName,
 		project,
+		l.DockerCli,
 	), nil
 }
