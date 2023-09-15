@@ -1,3 +1,4 @@
 services:
   additional:
     image: ubuntu:jammy-20230624
+    entrypoint: echo '{"foo":"baz"}'
