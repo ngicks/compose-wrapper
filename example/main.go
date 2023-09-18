@@ -34,7 +34,10 @@ func main() {
 		panic(err)
 	}
 
-	service, err := loader.LoadComposeService(context.Background())
+	service, err := loader.LoadComposeService(context.Background(), func(p *types.Project) error {
+		compose.EnableAllService(p)
+		return nil
+	})
 	if err != nil {
 		panic(err)
 	}

@@ -96,11 +96,18 @@ func (l *Loader) Load(ctx context.Context) (*types.Project, error) {
 	)
 }
 
-func (l *Loader) LoadComposeService(ctx context.Context) (*ComposeService, error) {
+func (l *Loader) LoadComposeService(ctx context.Context, ops ...func(p *types.Project) error) (*ComposeService, error) {
 	project, err := l.Load(ctx)
 	if err != nil {
 		return nil, err
 	}
+
+	for _, op := range ops {
+		if err := op(project); err != nil {
+			return nil, err
+		}
+	}
+
 	return NewComposeService(
 		l.ProjectName,
 		project,
