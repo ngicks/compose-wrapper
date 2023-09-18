@@ -12,6 +12,8 @@ services:
       - sample network
     secrets:
       - sample_secret
+    profiles:
+      - base
 volumes:
   sample-volume:
 networks:
