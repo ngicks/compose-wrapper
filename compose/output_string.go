@@ -104,11 +104,11 @@ func DecodeComposeOutputLine(line string, projectName string, project *types.Pro
 	}
 	decoded.Name, decoded.Num, line = readResourceName(line, projectName, project, decoded.ResourceType)
 	if decoded.Name == "" {
-		return ComposeOutputLine{}, fmt.Errorf("unknown resource type. input = %s", orgLine)
+		return ComposeOutputLine{}, fmt.Errorf("unknown resource name. input = %s", orgLine)
 	}
 	decoded.StateType, decoded.Desc = readState(line)
 	if decoded.StateType == "" {
-		return ComposeOutputLine{}, fmt.Errorf("unknown resource type. input = %s", orgLine)
+		return ComposeOutputLine{}, fmt.Errorf("unknown state. input = %s", orgLine)
 	}
 
 	return decoded, nil
