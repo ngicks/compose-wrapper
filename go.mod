@@ -6,8 +6,8 @@ require (
 	github.com/compose-spec/compose-go v1.18.3
 	github.com/docker/cli v24.0.6+incompatible
 	github.com/docker/compose/v2 v2.21.0
-	github.com/docker/docker v24.0.5+incompatible
 	github.com/google/go-cmp v0.5.9
+	github.com/stretchr/testify v1.8.4
 )
 
 require (
@@ -41,6 +41,7 @@ require (
 	github.com/distribution/distribution/v3 v3.0.0-20230601133803-97b1d649c493 // indirect
 	github.com/docker/buildx v0.11.2 // indirect
 	github.com/docker/distribution v2.8.2+incompatible // indirect
+	github.com/docker/docker v24.0.5+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/docker/go v1.5.1-1.0.20160303222718-d30aec9fd63c // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
@@ -118,7 +119,6 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/cobra v1.7.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/theupdateframework/notary v0.7.0 // indirect
 	github.com/tilt-dev/fsnotify v1.4.8-0.20220602155310-fff9c274a375 // indirect
 	github.com/tonistiigi/fsutil v0.0.0-20230629203738-36ef4d8c0dbb // indirect
