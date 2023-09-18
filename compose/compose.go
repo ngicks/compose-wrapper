@@ -156,7 +156,6 @@ func (c *ComposeService) Down(ctx context.Context, options api.DownOptions) (Com
 func (c *ComposeService) Ps(ctx context.Context, options api.PsOptions) ([]api.ContainerSummary, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	defer c.resetBuf()
 	if options.Project == nil {
 		options.Project = c.project
 	}
