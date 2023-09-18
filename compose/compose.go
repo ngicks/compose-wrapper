@@ -80,21 +80,8 @@ func (c *ComposeService) resetBuf() {
 }
 
 func (c *ComposeService) parseOutput() ComposeOutput {
-	out := ComposeOutput{
-		Resource: make(map[string]ComposeOutputLine),
-	}
-	for _, lines := range []string{c.out.String(), c.err.String()} {
-		for _, line := range strings.Split(lines, "\n") {
-			if line == "" {
-				continue
-			}
-			decoded, err := DecodeComposeOutputLine(line, c.projectName, c.project)
-			if err != nil {
-				continue
-			}
-			out.Resource[decoded.Name] = decoded
-		}
-	}
+	out := ComposeOutput{}
+	out.ParseOutput(c.out.String(), c.err.String(), c.projectName, c.project)
 	return out
 }
 

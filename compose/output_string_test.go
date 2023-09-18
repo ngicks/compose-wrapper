@@ -3,30 +3,14 @@ package compose
 import (
 	"context"
 	_ "embed"
-	"os"
 	"strings"
 	"testing"
 
-	"github.com/compose-spec/compose-go/loader"
-	"github.com/compose-spec/compose-go/types"
 	"github.com/google/go-cmp/cmp"
 )
 
 func TestOutputString(t *testing.T) {
-	projectName := "testdata"
-	project, err := loader.LoadWithContext(
-		context.Background(), types.ConfigDetails{
-			WorkingDir: "./testdata",
-			ConfigFiles: []types.ConfigFile{
-				{Filename: "./testdata/compose.yml"},
-				{Filename: "./testdata/additional.yml"},
-			},
-			Environment: types.NewMapping(os.Environ()),
-		},
-		func(o *loader.Options) {
-			o.SetProjectName(projectName, true)
-		},
-	)
+	project, err := loaderAdditional.Load(context.Background())
 	if err != nil {
 		panic(err)
 	}

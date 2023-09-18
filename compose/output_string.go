@@ -1,6 +1,7 @@
 package compose
 
 import (
+	"bufio"
 	"fmt"
 	"sort"
 	"strconv"
@@ -74,6 +75,29 @@ var states = []StateType{
 type ComposeOutput struct {
 	Resource map[string]ComposeOutputLine
 	Out, Err string
+}
+
+func (o *ComposeOutput) ParseOutput(stdout, stderr string, projectName string, project *types.Project) {
+	if o.Resource == nil {
+		o.Resource = make(map[string]ComposeOutputLine)
+	}
+	o.Out = stdout
+	o.Err = stderr
+
+	for _, lines := range []string{stdout, stderr} {
+		scanner := bufio.NewScanner(strings.NewReader(lines))
+		for scanner.Scan() {
+			line := scanner.Text()
+			if line == "" {
+				continue
+			}
+			decoded, err := DecodeComposeOutputLine(line, projectName, project)
+			if err != nil {
+				continue
+			}
+			o.Resource[decoded.Name] = decoded
+		}
+	}
 }
 
 type ComposeOutputLine struct {
