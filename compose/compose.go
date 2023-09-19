@@ -78,7 +78,7 @@ func (s *ComposeService) resetBuf() {
 
 func (s *ComposeService) parseOutput() ComposeOutput {
 	out := ComposeOutput{}
-	out.ParseOutput(s.out.String(), s.err.String(), s.projectName, s.project)
+	out.ParseOutput(s.out.String(), s.err.String(), s.projectName, s.project, s.dryRun)
 	return out
 }
 

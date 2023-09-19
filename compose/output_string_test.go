@@ -112,7 +112,7 @@ func TestOutputString(t *testing.T) {
 			if line == "" {
 				break
 			}
-			decoded, err := DecodeComposeOutputLine(line, "testdata", project)
+			decoded, err := DecodeComposeOutputLine(line, "testdata", project, false)
 			if tc.shouldErr {
 				if err == nil {
 					t.Errorf("decoding should cause an error but is nil")

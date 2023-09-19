@@ -77,7 +77,7 @@ type ComposeOutput struct {
 	Out, Err string
 }
 
-func (o *ComposeOutput) ParseOutput(stdout, stderr string, projectName string, project *types.Project) {
+func (o *ComposeOutput) ParseOutput(stdout, stderr string, projectName string, project *types.Project, isDryRunMode bool) {
 	if o.Resource == nil {
 		o.Resource = make(map[string]ComposeOutputLine)
 	}
@@ -91,7 +91,7 @@ func (o *ComposeOutput) ParseOutput(stdout, stderr string, projectName string, p
 			if line == "" {
 				continue
 			}
-			decoded, err := DecodeComposeOutputLine(line, projectName, project)
+			decoded, err := DecodeComposeOutputLine(line, projectName, project, isDryRunMode)
 			if err != nil {
 				continue
 			}
@@ -109,7 +109,7 @@ type ComposeOutputLine struct {
 	DryRunMode   bool
 }
 
-func DecodeComposeOutputLine(line string, projectName string, project *types.Project) (ComposeOutputLine, error) {
+func DecodeComposeOutputLine(line string, projectName string, project *types.Project, isDryRunMode bool) (ComposeOutputLine, error) {
 	orgLine := line
 
 	var decoded ComposeOutputLine
@@ -118,7 +118,7 @@ func DecodeComposeOutputLine(line string, projectName string, project *types.Pro
 
 	var found bool
 	line, found = strings.CutPrefix(line, DryRunModePrefix)
-	if found {
+	if found || isDryRunMode {
 		decoded.DryRunMode = true
 	}
 
