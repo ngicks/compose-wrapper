@@ -76,87 +76,87 @@ func (s *ComposeService) resetBuf() {
 	s.err.Reset()
 }
 
-func (c *ComposeService) parseOutput() ComposeOutput {
+func (s *ComposeService) parseOutput() ComposeOutput {
 	out := ComposeOutput{}
-	out.ParseOutput(c.out.String(), c.err.String(), c.projectName, c.project)
+	out.ParseOutput(s.out.String(), s.err.String(), s.projectName, s.project)
 	return out
 }
 
 // Create executes the equivalent to a `compose create`
-func (c *ComposeService) Create(ctx context.Context, options api.CreateOptions) (ComposeOutput, error) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	defer c.resetBuf()
-	if err := c.service.Create(ctx, c.project, options); err != nil {
+func (s *ComposeService) Create(ctx context.Context, options api.CreateOptions) (ComposeOutput, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	defer s.resetBuf()
+	if err := s.service.Create(ctx, s.project, options); err != nil {
 		return ComposeOutput{}, err
 	}
-	return c.parseOutput(), nil
+	return s.parseOutput(), nil
 }
 
 // Start executes the equivalent to a `compose start`
-func (c *ComposeService) Start(ctx context.Context, options api.StartOptions) (ComposeOutput, error) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	defer c.resetBuf()
+func (s *ComposeService) Start(ctx context.Context, options api.StartOptions) (ComposeOutput, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	defer s.resetBuf()
 	if options.Project == nil {
-		options.Project = c.project
+		options.Project = s.project
 	}
-	if err := c.service.Start(ctx, c.projectName, options); err != nil {
+	if err := s.service.Start(ctx, s.projectName, options); err != nil {
 		return ComposeOutput{}, err
 	}
-	return c.parseOutput(), nil
+	return s.parseOutput(), nil
 }
 
 // Restart restarts containers
-func (c *ComposeService) Restart(ctx context.Context, options api.RestartOptions) (ComposeOutput, error) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	defer c.resetBuf()
+func (s *ComposeService) Restart(ctx context.Context, options api.RestartOptions) (ComposeOutput, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	defer s.resetBuf()
 	if options.Project == nil {
-		options.Project = c.project
+		options.Project = s.project
 	}
-	if err := c.service.Restart(ctx, c.projectName, options); err != nil {
+	if err := s.service.Restart(ctx, s.projectName, options); err != nil {
 		return ComposeOutput{}, err
 	}
-	return c.parseOutput(), nil
+	return s.parseOutput(), nil
 }
 
 // Stop executes the equivalent to a `compose stop`
-func (c *ComposeService) Stop(ctx context.Context, options api.StopOptions) (ComposeOutput, error) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	defer c.resetBuf()
+func (s *ComposeService) Stop(ctx context.Context, options api.StopOptions) (ComposeOutput, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	defer s.resetBuf()
 	if options.Project == nil {
-		options.Project = c.project
+		options.Project = s.project
 	}
-	if err := c.service.Stop(ctx, c.projectName, options); err != nil {
+	if err := s.service.Stop(ctx, s.projectName, options); err != nil {
 		return ComposeOutput{}, err
 	}
-	return c.parseOutput(), nil
+	return s.parseOutput(), nil
 }
 
 // Down executes the equivalent to a `compose down`
-func (c *ComposeService) Down(ctx context.Context, options api.DownOptions) (ComposeOutput, error) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	defer c.resetBuf()
+func (s *ComposeService) Down(ctx context.Context, options api.DownOptions) (ComposeOutput, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	defer s.resetBuf()
 	if options.Project == nil {
-		options.Project = c.project
+		options.Project = s.project
 	}
-	if err := c.service.Down(ctx, c.projectName, options); err != nil {
+	if err := s.service.Down(ctx, s.projectName, options); err != nil {
 		return ComposeOutput{}, err
 	}
-	return c.parseOutput(), nil
+	return s.parseOutput(), nil
 }
 
 // Ps executes the equivalent to a `compose ps`
-func (c *ComposeService) Ps(ctx context.Context, options api.PsOptions) ([]api.ContainerSummary, error) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+func (s *ComposeService) Ps(ctx context.Context, options api.PsOptions) ([]api.ContainerSummary, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	if options.Project == nil {
-		options.Project = c.project
+		options.Project = s.project
 	}
-	summary, err := c.service.Ps(ctx, c.projectName, options)
+	summary, err := s.service.Ps(ctx, s.projectName, options)
 	if err != nil {
 		return nil, err
 	}
@@ -164,46 +164,48 @@ func (c *ComposeService) Ps(ctx context.Context, options api.PsOptions) ([]api.C
 }
 
 // Kill executes the equivalent to a `compose kill`
-func (c *ComposeService) Kill(ctx context.Context, options api.KillOptions) (ComposeOutput, error) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	defer c.resetBuf()
+func (s *ComposeService) Kill(ctx context.Context, options api.KillOptions) (ComposeOutput, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	defer s.resetBuf()
 	if options.Project == nil {
-		options.Project = c.project
+		options.Project = s.project
 	}
-	if err := c.service.Kill(ctx, c.projectName, options); err != nil {
+	if err := s.service.Kill(ctx, s.projectName, options); err != nil {
 		return ComposeOutput{}, err
 	}
-	return c.parseOutput(), nil
+	return s.parseOutput(), nil
 }
 
 // RunOneOffContainer creates a service oneoff container and starts its dependencies
-func (c *ComposeService) RunOneOffContainer(ctx context.Context, opts api.RunOptions) (exitCode int, stdout, stderr string, err error) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	defer c.resetBuf()
+//
+// Caveats: this does not work in dry run mode.
+func (s *ComposeService) RunOneOffContainer(ctx context.Context, opts api.RunOptions) (exitCode int, stdout, stderr string, err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	defer s.resetBuf()
 	if opts.Project == nil {
-		opts.Project = c.project
+		opts.Project = s.project
 	}
-	exitCode, err = c.service.RunOneOffContainer(ctx, c.project, opts)
+	exitCode, err = s.service.RunOneOffContainer(ctx, s.project, opts)
 	if err != nil {
-		return exitCode, c.out.String(), c.err.String(), err
+		return exitCode, s.out.String(), s.err.String(), err
 	}
-	return exitCode, c.out.String(), c.err.String(), nil
+	return exitCode, s.out.String(), s.err.String(), nil
 }
 
 // Remove executes the equivalent to a `compose rm`
-func (c *ComposeService) Remove(ctx context.Context, options api.RemoveOptions) (ComposeOutput, error) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	defer c.resetBuf()
+func (s *ComposeService) Remove(ctx context.Context, options api.RemoveOptions) (ComposeOutput, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	defer s.resetBuf()
 	if options.Project == nil {
-		options.Project = c.project
+		options.Project = s.project
 	}
-	if err := c.service.Remove(ctx, c.projectName, options); err != nil {
+	if err := s.service.Remove(ctx, s.projectName, options); err != nil {
 		return ComposeOutput{}, err
 	}
-	return c.parseOutput(), nil
+	return s.parseOutput(), nil
 }
 
 // DryRunMode switches c to dry run mode if dryRun is true.
