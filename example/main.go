@@ -42,6 +42,11 @@ func main() {
 		panic(err)
 	}
 
+	_, err = service.DryRunMode(context.Background(), true)
+	if err != nil {
+		panic(err)
+	}
+
 	fmt.Println("compose service created")
 	list, err := service.Ps(context.Background(), api.PsOptions{All: true})
 	if err != nil {
@@ -51,6 +56,7 @@ func main() {
 	out, err := service.Create(context.Background(), api.CreateOptions{
 		Recreate:             api.RecreateDiverged,
 		RecreateDependencies: api.RecreateDiverged,
+		RemoveOrphans:        true,
 		Inherit:              true,
 	})
 	if err != nil {
@@ -64,9 +70,15 @@ func main() {
 	}
 	fmt.Printf("%+#v\n\n", list)
 
-	exitCode, stdout, stderr, err := service.RunOneOffContainer(context.Background(), api.RunOptions{Service: "additional"})
+	exitCode, stdout, stderr, err := service.RunOneOffContainer(context.Background(), api.RunOptions{Service: "additional", AutoRemove: true})
 	if err != nil {
-		panic(err)
+		fmt.Printf("err = %v\n\n", err)
 	}
 	fmt.Printf("exitCode = %d, stdout = %s, stderr = %s\n\n", exitCode, stdout, stderr)
+
+	// out, err = service.Down(context.Background(), api.DownOptions{RemoveOrphans: true, Volumes: true})
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// fmt.Printf("%+#v\n\n", out)
 }
