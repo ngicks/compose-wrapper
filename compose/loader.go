@@ -2,7 +2,10 @@ package compose
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"path/filepath"
+	"slices"
 
 	"github.com/compose-spec/compose-go/loader"
 	"github.com/compose-spec/compose-go/types"
@@ -54,6 +57,44 @@ func InitializeDockerCli(
 	}
 
 	return dockerCli, nil
+}
+
+// PreloadConfigDetails loads content and parse content if each corresponding field is not present in given conf.
+func PreloadConfigDetails(conf types.ConfigDetails) (types.ConfigDetails, error) {
+	cloned := types.ConfigDetails{
+		Version:     conf.Version,
+		WorkingDir:  conf.WorkingDir,
+		ConfigFiles: slices.Clone(conf.ConfigFiles),
+		Environment: conf.Environment.Clone(),
+	}
+
+	if len(cloned.ConfigFiles) == 0 {
+		return types.ConfigDetails{}, fmt.Errorf("ConfigFiles must not be empty")
+	}
+
+	if cloned.WorkingDir == "" {
+		cloned.WorkingDir = filepath.Dir(cloned.ConfigFiles[0].Filename)
+	}
+
+	for i, confFile := range cloned.ConfigFiles {
+		if len(confFile.Content) == 0 {
+			bin, err := os.ReadFile(confFile.Filename)
+			if err != nil {
+				return types.ConfigDetails{}, err
+			}
+			confFile.Content = bin
+		}
+		if len(confFile.Config) == 0 {
+			parsed, err := loader.ParseYAML(confFile.Content)
+			if err != nil {
+				return types.ConfigDetails{}, err
+			}
+			confFile.Config = parsed
+		}
+		cloned.ConfigFiles[i] = confFile
+	}
+
+	return cloned, nil
 }
 
 type Loader struct {

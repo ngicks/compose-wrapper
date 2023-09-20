@@ -10,13 +10,15 @@ import (
 	"github.com/compose-spec/compose-go/types"
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/compose/v2/pkg/api"
+	"github.com/google/go-cmp/cmp"
 	"github.com/ngicks/compose-wrapper/compose"
 )
 
 func main() {
 	projectName := "testdata"
-	loader, err := compose.NewLoader(
-		projectName,
+
+	loadedNormaly, err := loader.LoadWithContext(
+		context.Background(),
 		types.ConfigDetails{
 			WorkingDir: "../compose/testdata",
 			ConfigFiles: []types.ConfigFile{
@@ -25,6 +27,28 @@ func main() {
 			},
 			Environment: types.NewMapping(os.Environ()),
 		},
+		func(o *loader.Options) {
+			o.SetProjectName(projectName, true)
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	confDetail, err := compose.PreloadConfigDetails(types.ConfigDetails{
+		WorkingDir: "../compose/testdata",
+		ConfigFiles: []types.ConfigFile{
+			{Filename: "../compose/testdata/compose.yml"},
+			{Filename: "../compose/testdata/additional.yml"},
+		},
+		Environment: types.NewMapping(os.Environ()),
+	})
+	if err != nil {
+		panic(err)
+	}
+	loader, err := compose.NewLoader(
+		projectName,
+		confDetail,
 		[](func(*loader.Options)){},
 		nil,
 		command.WithOutputStream(io.Discard),
@@ -33,6 +57,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	project, _ := loader.Load(context.Background())
+
+	// no diff.
+	fmt.Printf("diff = %s\n", cmp.Diff(loadedNormaly, project))
 
 	service, err := loader.LoadComposeService(context.Background(), func(p *types.Project) error {
 		compose.EnableAllService(p)
