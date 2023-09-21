@@ -35,7 +35,7 @@ type ComposeService struct {
 	mu          sync.Mutex
 	out, err    *bytes.Buffer
 	dryRun      bool
-	cli         *command.DockerCli
+	cli         command.Cli
 	projectName string
 	project     *types.Project
 	service     api.Service
@@ -46,7 +46,7 @@ type ComposeService struct {
 func NewComposeService(
 	projectName string,
 	project *types.Project,
-	dockerCli *command.DockerCli,
+	dockerCli command.Cli,
 ) *ComposeService {
 	AddDockerComposeLabel(project)
 
