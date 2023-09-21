@@ -95,7 +95,7 @@ func (o *ComposeOutput) ParseOutput(stdout, stderr string, projectName string, p
 			if err != nil {
 				continue
 			}
-			o.Resource[decoded.Name] = decoded
+			o.Resource[string(decoded.ResourceType)+":"+decoded.Name] = decoded
 		}
 	}
 }
