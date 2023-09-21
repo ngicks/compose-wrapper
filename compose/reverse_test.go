@@ -36,17 +36,47 @@ const reverseComposeYaml = `services:
 
 func TestReverse(t *testing.T) {
 	assert := assert.New(t)
-	src := loadFromString(reverseComposeYaml)
-	dst := loadFromString(reverseComposeYaml)
-	assert.NoError(src.EnableServices("enabled", "dependency"))
-	assert.NoError(src.ForServices([]string{"enabled"}, types.IncludeDependencies))
-	assert.NoError(Reverse(src, dst))
 
-	if diff := cmp.Diff([]string{"dependency", "enabled"}, src.ServiceNames()); diff != "" {
-		t.Errorf("not equal. diff = %s", diff)
+	type testCase struct {
+		enabled      []string
+		forServices  []string
+		enabledInSrc []string
+		enabledInDst []string
 	}
-	if diff := cmp.Diff([]string{"disabled"}, dst.ServiceNames()); diff != "" {
-		t.Errorf("not equal. diff = %s", diff)
+	for idx, tc := range []testCase{
+		{
+			enabled:      []string{"enabled", "dependency"},
+			forServices:  []string{"enabled"},
+			enabledInSrc: []string{"dependency", "enabled"},
+			enabledInDst: []string{"disabled"},
+		},
+		{
+			enabled:      []string{"enabled", "dependency", "disabled"},
+			forServices:  []string{"enabled", "disabled"},
+			enabledInSrc: []string{"dependency", "disabled", "enabled"},
+			enabledInDst: nil,
+		},
+		{
+			enabled:      []string{},
+			forServices:  []string{},
+			enabledInSrc: nil,
+			enabledInDst: []string{"dependency", "disabled", "enabled"},
+		},
+	} {
+		src := loadFromString(reverseComposeYaml)
+		dst := loadFromString(reverseComposeYaml)
+		assert.NoError(src.EnableServices(tc.enabled...))
+		assert.NoError(src.ForServices(tc.forServices, types.IncludeDependencies))
+		assert.NoError(dst.EnableServices(tc.enabled...))
+		assert.NoError(dst.ForServices(tc.forServices, types.IncludeDependencies))
+		assert.NoError(Reverse(src, dst))
+
+		if diff := cmp.Diff(tc.enabledInSrc, src.ServiceNames()); diff != "" {
+			t.Errorf("case = %d. not equal. diff = %s", idx, diff)
+		}
+		if diff := cmp.Diff(tc.enabledInDst, dst.ServiceNames()); diff != "" {
+			t.Errorf("case = %d. not equal. diff = %s", idx, diff)
+		}
 	}
 }
 

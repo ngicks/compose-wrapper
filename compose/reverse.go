@@ -18,11 +18,20 @@ func Reverse(src, dst *types.Project) error {
 		}
 	}
 
-	if err := dst.EnableServices(disabledServices...); err != nil {
-		return err
-	}
-	if err := dst.ForServices(disabledServices, types.IgnoreDependencies); err != nil {
-		return err
+	if len(disabledServices) > 0 {
+		if err := dst.EnableServices(disabledServices...); err != nil {
+			return err
+		}
+		if err := dst.ForServices(disabledServices, types.IgnoreDependencies); err != nil {
+			return err
+		}
+	} else {
+		services := dst.Services
+		for _, s := range services {
+			dst.DisableService(s)
+			dst.Services = append(dst.Services, s)
+		}
+		dst.Services = []types.ServiceConfig{}
 	}
 	return nil
 }
