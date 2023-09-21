@@ -11,36 +11,18 @@ import (
 )
 
 var (
-	loaderBase, loaderAdditional, loaderAdditional2 *Loader
+	loaderBase, loaderAdditional, loaderAdditional2 *LoaderProxy
 )
 
 func init() {
-	loaderBase, _ = NewLoader(
-		"testdata",
-		types.ConfigDetails{
-			WorkingDir: "./testdata",
-			ConfigFiles: []types.ConfigFile{
-				{Filename: "./testdata/compose.yml"},
-			},
-			Environment: types.NewMapping(os.Environ()),
-		},
-		[]func(*loader.Options){func(o *loader.Options) { o.Profiles = []string{"*"} }},
-		nil,
-	)
-	loaderAdditional, _ = NewLoader(
-		"testdata",
-		types.ConfigDetails{
-			WorkingDir: "./testdata",
-			ConfigFiles: []types.ConfigFile{
-				{Filename: "./testdata/compose.yml"},
-				{Filename: "./testdata/additional.yml"},
-			},
-			Environment: types.NewMapping(os.Environ()),
-		},
-		[]func(*loader.Options){func(o *loader.Options) { o.Profiles = []string{"*"} }},
-		nil,
-	)
-	loaderAdditional2, _ = NewLoader(
+	must := func(err error) {
+		if err != nil {
+			panic(err)
+		}
+	}
+	var err error
+
+	loaderAdditional2, err = NewLoaderProxy(
 		"testdata",
 		types.ConfigDetails{
 			WorkingDir: "./testdata",
@@ -54,6 +36,36 @@ func init() {
 		[]func(*loader.Options){func(o *loader.Options) { o.Profiles = []string{"*"} }},
 		nil,
 	)
+	must(err)
+	must(loaderAdditional2.PreloadConfigDetails())
+
+	configDetails := loaderAdditional2.ConfigDetails()
+
+	loaderBase, err = NewLoaderProxy(
+		loaderAdditional2.ProjectName(),
+		types.ConfigDetails{
+			Version:     configDetails.Version,
+			WorkingDir:  configDetails.WorkingDir,
+			ConfigFiles: []types.ConfigFile{configDetails.ConfigFiles[0]},
+			Environment: configDetails.Environment,
+		},
+		loaderAdditional2.Options(),
+		nil,
+	)
+	must(err)
+
+	loaderAdditional, err = NewLoaderProxy(
+		loaderAdditional2.ProjectName(),
+		types.ConfigDetails{
+			Version:     configDetails.Version,
+			WorkingDir:  configDetails.WorkingDir,
+			ConfigFiles: []types.ConfigFile{configDetails.ConfigFiles[0], configDetails.ConfigFiles[1]},
+			Environment: configDetails.Environment,
+		},
+		loaderAdditional2.Options(),
+		nil,
+	)
+	must(err)
 }
 
 func TestCompareProjectImage(t *testing.T) {
