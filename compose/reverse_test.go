@@ -71,12 +71,21 @@ func TestReverse(t *testing.T) {
 		assert.NoError(dst.ForServices(tc.forServices, types.IncludeDependencies))
 		assert.NoError(Reverse(src, dst))
 
-		if diff := cmp.Diff(tc.enabledInSrc, src.ServiceNames()); diff != "" {
-			t.Errorf("case = %d. not equal. diff = %s", idx, diff)
+		assertNoDiff := func(expected, actual any) {
+			if diff := cmp.Diff(expected, actual); diff != "" {
+				t.Errorf("case = %d. not equal. diff = %s", idx, diff)
+			}
 		}
-		if diff := cmp.Diff(tc.enabledInDst, dst.ServiceNames()); diff != "" {
-			t.Errorf("case = %d. not equal. diff = %s", idx, diff)
-		}
+		assertNoDiff(tc.enabledInSrc, src.ServiceNames())
+		assertNoDiff(tc.enabledInDst, dst.ServiceNames())
+		assertNoDiff(
+			map[string]struct{}{"dependency": {}, "disabled": {}, "enabled": {}},
+			toSet(src.AllServices()),
+		)
+		assertNoDiff(
+			map[string]struct{}{"dependency": {}, "disabled": {}, "enabled": {}},
+			toSet(dst.AllServices()),
+		)
 	}
 }
 
@@ -101,4 +110,12 @@ func loadFromString(composeYmlStr string) *types.Project {
 		panic(err)
 	}
 	return loaded
+}
+
+func toSet(services []types.ServiceConfig) map[string]struct{} {
+	out := make(map[string]struct{}, len(services))
+	for _, s := range services {
+		out[s.Name] = struct{}{}
+	}
+	return out
 }

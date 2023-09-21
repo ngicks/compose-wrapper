@@ -29,7 +29,6 @@ func Reverse(src, dst *types.Project) error {
 		services := dst.Services
 		for _, s := range services {
 			dst.DisableService(s)
-			dst.Services = append(dst.Services, s)
 		}
 		dst.Services = []types.ServiceConfig{}
 	}
