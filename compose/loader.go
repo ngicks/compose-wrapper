@@ -114,6 +114,9 @@ func PreloadConfigDetails(conf types.ConfigDetails) (types.ConfigDetails, error)
 	return cloned, nil
 }
 
+var _ ComposeProjectLoader = (*Loader)(nil)
+var _ ComposeServiceLoader = (*Loader)(nil)
+
 type Loader struct {
 	DockerCli     *command.DockerCli
 	ProjectName   string

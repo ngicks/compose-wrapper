@@ -1,6 +1,7 @@
 package compose
 
 import (
+	"context"
 	"slices"
 	"sync"
 
@@ -9,6 +10,17 @@ import (
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/flags"
 )
+
+type ComposeProjectLoader interface {
+	Load(ctx context.Context) (*types.Project, error)
+}
+
+type ComposeServiceLoader interface {
+	LoadComposeService(ctx context.Context, ops ...func(p *types.Project) error) (*ComposeService, error)
+}
+
+var _ ComposeProjectLoader = (*LoaderProxy)(nil)
+var _ ComposeServiceLoader = (*LoaderProxy)(nil)
 
 type LoaderProxy struct {
 	mu     sync.RWMutex
@@ -30,6 +42,18 @@ func NewLoaderProxy(
 	return &LoaderProxy{
 		loader: loader,
 	}, nil
+}
+
+func (p *LoaderProxy) Load(ctx context.Context) (*types.Project, error) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.loader.Load(ctx)
+}
+
+func (p *LoaderProxy) LoadComposeService(ctx context.Context, ops ...func(p *types.Project) error) (*ComposeService, error) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.loader.LoadComposeService(ctx, ops...)
 }
 
 func (p *LoaderProxy) PreloadConfigDetails() error {
