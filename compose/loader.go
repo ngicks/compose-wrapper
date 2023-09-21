@@ -3,6 +3,7 @@ package compose
 import (
 	"context"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -59,14 +60,30 @@ func InitializeDockerCli(
 	return dockerCli, nil
 }
 
-// PreloadConfigDetails loads content and parse content if each corresponding field is not present in given conf.
-func PreloadConfigDetails(conf types.ConfigDetails) (types.ConfigDetails, error) {
-	cloned := types.ConfigDetails{
+func cloneConfigDetails(conf types.ConfigDetails) types.ConfigDetails {
+	return types.ConfigDetails{
 		Version:     conf.Version,
 		WorkingDir:  conf.WorkingDir,
-		ConfigFiles: slices.Clone(conf.ConfigFiles),
+		ConfigFiles: cloneConfigFiles(conf.ConfigFiles),
 		Environment: conf.Environment.Clone(),
 	}
+}
+
+func cloneConfigFiles(files []types.ConfigFile) []types.ConfigFile {
+	out := make([]types.ConfigFile, len(files))
+	for idx, f := range files {
+		out[idx] = types.ConfigFile{
+			Filename: f.Filename,
+			Content:  slices.Clone(f.Content),
+			Config:   maps.Clone(f.Config),
+		}
+	}
+	return out
+}
+
+// PreloadConfigDetails loads content and parse content if each corresponding field is not present in given conf.
+func PreloadConfigDetails(conf types.ConfigDetails) (types.ConfigDetails, error) {
+	cloned := cloneConfigDetails(conf)
 
 	if len(cloned.ConfigFiles) == 0 {
 		return types.ConfigDetails{}, fmt.Errorf("ConfigFiles must not be empty")
