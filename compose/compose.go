@@ -87,10 +87,8 @@ func (s *ComposeService) Create(ctx context.Context, options api.CreateOptions) 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	defer s.resetBuf()
-	if err := s.service.Create(ctx, s.project, options); err != nil {
-		return ComposeOutput{}, err
-	}
-	return s.parseOutput(), nil
+	err := s.service.Create(ctx, s.project, options)
+	return s.parseOutput(), err
 }
 
 // Start executes the equivalent to a `compose start`
@@ -101,10 +99,8 @@ func (s *ComposeService) Start(ctx context.Context, options api.StartOptions) (C
 	if options.Project == nil {
 		options.Project = s.project
 	}
-	if err := s.service.Start(ctx, s.projectName, options); err != nil {
-		return ComposeOutput{}, err
-	}
-	return s.parseOutput(), nil
+	err := s.service.Start(ctx, s.projectName, options)
+	return s.parseOutput(), err
 }
 
 // Restart restarts containers
@@ -115,10 +111,8 @@ func (s *ComposeService) Restart(ctx context.Context, options api.RestartOptions
 	if options.Project == nil {
 		options.Project = s.project
 	}
-	if err := s.service.Restart(ctx, s.projectName, options); err != nil {
-		return ComposeOutput{}, err
-	}
-	return s.parseOutput(), nil
+	err := s.service.Restart(ctx, s.projectName, options)
+	return s.parseOutput(), err
 }
 
 // Stop executes the equivalent to a `compose stop`
@@ -129,10 +123,8 @@ func (s *ComposeService) Stop(ctx context.Context, options api.StopOptions) (Com
 	if options.Project == nil {
 		options.Project = s.project
 	}
-	if err := s.service.Stop(ctx, s.projectName, options); err != nil {
-		return ComposeOutput{}, err
-	}
-	return s.parseOutput(), nil
+	err := s.service.Stop(ctx, s.projectName, options)
+	return s.parseOutput(), err
 }
 
 // Down executes the equivalent to a `compose down`
@@ -143,10 +135,8 @@ func (s *ComposeService) Down(ctx context.Context, options api.DownOptions) (Com
 	if options.Project == nil {
 		options.Project = s.project
 	}
-	if err := s.service.Down(ctx, s.projectName, options); err != nil {
-		return ComposeOutput{}, err
-	}
-	return s.parseOutput(), nil
+	err := s.service.Down(ctx, s.projectName, options)
+	return s.parseOutput(), err
 }
 
 // Ps executes the equivalent to a `compose ps`
@@ -171,10 +161,8 @@ func (s *ComposeService) Kill(ctx context.Context, options api.KillOptions) (Com
 	if options.Project == nil {
 		options.Project = s.project
 	}
-	if err := s.service.Kill(ctx, s.projectName, options); err != nil {
-		return ComposeOutput{}, err
-	}
-	return s.parseOutput(), nil
+	err := s.service.Kill(ctx, s.projectName, options)
+	return s.parseOutput(), err
 }
 
 // RunOneOffContainer creates a service oneoff container and starts its dependencies
@@ -202,10 +190,8 @@ func (s *ComposeService) Remove(ctx context.Context, options api.RemoveOptions) 
 	if options.Project == nil {
 		options.Project = s.project
 	}
-	if err := s.service.Remove(ctx, s.projectName, options); err != nil {
-		return ComposeOutput{}, err
-	}
-	return s.parseOutput(), nil
+	err := s.service.Remove(ctx, s.projectName, options)
+	return s.parseOutput(), err
 }
 
 // DryRunMode switches c to dry run mode if dryRun is true.
