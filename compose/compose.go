@@ -165,22 +165,9 @@ func (s *ComposeService) Kill(ctx context.Context, options api.KillOptions) (Com
 	return s.parseOutput(), err
 }
 
-// RunOneOffContainer creates a service oneoff container and starts its dependencies
-//
-// Caveats: this does not work in dry run mode.
-func (s *ComposeService) RunOneOffContainer(ctx context.Context, opts api.RunOptions) (exitCode int, stdout, stderr string, err error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	defer s.resetBuf()
-	if opts.Project == nil {
-		opts.Project = s.project
-	}
-	exitCode, err = s.service.RunOneOffContainer(ctx, s.project, opts)
-	if err != nil {
-		return exitCode, s.out.String(), s.err.String(), err
-	}
-	return exitCode, s.out.String(), s.err.String(), nil
-}
+// RunOneOffContainer is not exposed here since it calls `signal.Reset` on invocation,
+// which removes all signal handlers installed by user code.
+// Since it destroys our signal handling planning, we will not be able to rely on it.
 
 // Remove executes the equivalent to a `compose rm`
 func (s *ComposeService) Remove(ctx context.Context, options api.RemoveOptions) (ComposeOutput, error) {
