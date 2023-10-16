@@ -99,12 +99,6 @@ func main() {
 	}
 	fmt.Printf("%+#v\n\n", list)
 
-	exitCode, stdout, stderr, err := service.RunOneOffContainer(context.Background(), api.RunOptions{Service: "additional", AutoRemove: true})
-	if err != nil {
-		fmt.Printf("err = %v\n\n", err)
-	}
-	fmt.Printf("exitCode = %d, stdout = %s, stderr = %s\n\n", exitCode, stdout, stderr)
-
 	// out, err = service.Down(context.Background(), api.DownOptions{RemoveOrphans: true, Volumes: true})
 	// if err != nil {
 	// 	panic(err)
