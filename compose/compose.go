@@ -18,8 +18,8 @@ import (
 func AddDockerComposeLabel(project *types.Project) {
 	// Mimicking toProject of cli/cli.
 	// Without this, docker compose v2 lose track of project and therefore would not be able to recreate services.
-	for i, service := range project.Services {
-		service.CustomLabels = map[string]string{
+	customLabel := func(service types.ServiceConfig) map[string]string {
+		return map[string]string{
 			api.ProjectLabel:     project.Name,
 			api.ServiceLabel:     service.Name,
 			api.VersionLabel:     api.ComposeVersion,
@@ -27,7 +27,16 @@ func AddDockerComposeLabel(project *types.Project) {
 			api.ConfigFilesLabel: strings.Join(project.ComposeFiles, ","),
 			api.OneoffLabel:      "False", // default, will be overridden by `run` command
 		}
+	}
+
+	for i, service := range project.Services {
+		service.CustomLabels = customLabel(service)
 		project.Services[i] = service
+	}
+
+	for i, service := range project.DisabledServices {
+		service.CustomLabels = customLabel(service)
+		project.DisabledServices[i] = service
 	}
 }
 
